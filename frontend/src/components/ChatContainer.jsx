@@ -1,5 +1,5 @@
 import { useChatStore } from "../store/useChatStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
@@ -7,8 +7,10 @@ import MessageSkeleton from "./skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 import { useThemeStore } from "../store/useThemeStore";
+import ImagePortal from "./ImagePortal";
 
 const ChatContainer = () => {
+  const [selectedImage, setSelectedImage] = useState(null);
   const {theme} = useThemeStore()
   const {
     messages,
@@ -66,8 +68,8 @@ const ChatContainer = () => {
                 <img
                   src={
                     message.senderId === authUser._id
-                      ? authUser.profilePic || "/avatar.png"
-                      : selectedUser.profilePic || "/avatar.png"
+                      ? authUser.profilePic || "No-Image.jpg"
+                      : selectedUser.profilePic || "No-Image.jpg"
                   }
                   alt="profile pic"
                 />
@@ -84,8 +86,14 @@ const ChatContainer = () => {
                   src={message.image}
                   alt="Attachment"
                   className="sm:max-w-50 rounded-md mb-2"
+                  onClick={() => setSelectedImage(message.image)}
                 />
               )}
+              
+  {selectedImage && (
+                <ImagePortal image={selectedImage} onClose={() => setSelectedImage(null)}/>
+              )}
+
               {message.text && <p>{message.text}</p>}
             </div>
           </div>
