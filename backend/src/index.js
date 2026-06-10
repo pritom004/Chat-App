@@ -21,7 +21,6 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieparser());
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
-
 //Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
