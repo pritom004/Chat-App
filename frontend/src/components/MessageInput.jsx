@@ -7,7 +7,7 @@ import { useAuthStore } from "../store/useAuthStore";
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -49,6 +49,7 @@ useEffect(() => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true)
     if (!text.trim() && !imagePreview) return;
 
     try {
@@ -64,6 +65,8 @@ useEffect(() => {
     } catch (error) {
       toast.error("Failed to send message. Please try again.");
       // Optionally, you could set an error state here for inline error rendering
+    }finally{
+       setIsSubmitting(false)
     }
   };
 
@@ -97,7 +100,7 @@ useEffect(() => {
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
             placeholder="Type a message..."
             value={text}
-            
+            disabled={isSubmitting}
             onChange={(e) =>{
                setText(e.target.value)
                typing()
@@ -109,6 +112,7 @@ useEffect(() => {
             className="hidden"
             ref={fileInputRef}
             onChange={handleImageChange}
+            
           />
 
           <button
@@ -123,7 +127,7 @@ useEffect(() => {
         <button
           type="submit"
           className="btn btn-sm btn-circle"
-          disabled={!text.trim() && !imagePreview}
+          disabled={!text.trim() && !imagePreview || isSubmitting}
         >
           <Send size={22} />
         </button>
