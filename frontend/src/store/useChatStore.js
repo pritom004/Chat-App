@@ -2,11 +2,12 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
-
+let timeoutId;
+let typingCheck = false;
 export const useChatStore = create((set, get) => ({
   messages: [],
   users: [],
-  isTyping:false,
+  isTyping: false,
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
@@ -34,38 +35,81 @@ export const useChatStore = create((set, get) => ({
       set({ isMessagesLoading: false });
     }
   },
-//   sendMessage: async (messageData) => {
-//     const { selectedUser, messages } = get();
-//     try {
-//       const res = await axiosInstance.post(
-//         `/messages/send/${selectedUser._id}`,
-//         messageData
-//       );
-//       set({ messages: [...messages, res.data] });
-//     } catch (error) {
-//       toast.error(error.response.data.message);
-//     }
-//   },
+  sendMessage: async (messageData) => {
+    const { selectedUser, messages } = get();
+    if (!selectedUser) return;
+    try {
+      const res = await axiosInstance.post(
+        `/messages/send/${selectedUser._id}`,
+        messageData,
+      );
+      set({ messages: [...messages, res.data] });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send message");
+    }
+  },
+  subscribeToMessage: () => {
+    const { selectedUser } = get();
 
-//   subscribeToMessage: () => {
-//     const { selectedUser } = get();
-//     if (!selectedUser) return;
-//     const socket = useAuthStore.getState().socket;
+    if (!selectedUser) return;
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
 
-//     socket.on("newMessage" , (newMessage)=>{
-//       const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-//       if(!isMessageSentFromSelectedUser) return;
+    socket.on("newMessage", (newMessage) => {
+      const currentSelectedUser = get().selectedUser;
+      const isMessageSendFromSelectedUser =
+        currentSelectedUser && newMessage.senderId === currentSelectedUser._id;
 
-//       set({
-//         messages:[...get().messages , newMessage]
-//       })
-//     })
-//   },
-//   unsubscribeFromMessages: () => {
-//     const socket = useAuthStore.getState().socket;
-//     socket.off("newMessage");
-//   },
+      if (!isMessageSendFromSelectedUser) return;
 
+      set({
+        messages: [...get().messages, newMessage],
+      });
+    });
+  },
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    socket.off("newMessage");
+  },
+
+  typing: () => {
+    const selectedUser = get().selectedUser;
+    const socket = useAuthStore.getState().socket;
+    if (!selectedUser || !socket) return;
+    const receiverId = selectedUser._id;
+    if (!typingCheck) {
+   
+      
+      socket.emit("typing", receiverId);
+      typingCheck = true;
+    }
+    clearTimeout(timeoutId);
+    
+
+    timeoutId = setTimeout(() => {
+      typingCheck = false;
+      socket.emit("stopTyping", receiverId);
+    }, 1500);
+  },
+  subscribeUserTyping: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    socket.on("userTyping", () => {
+     
+
+      set({ isTyping: true });
+    });
+
+    socket.on("stopUserTyping", () => {
+      set({ isTyping: false });
+    });
+  },
+  unsubscribeUserTyping: () => {
+    const socket = useAuthStore.getState().socket;
+    if (!socket) return;
+    socket.off("userTyping");
+    socket.off("stopUserTyping");
+  },
   setSelectedUser: (selectedUser) => set({ selectedUser }),
-  setTyping:(isTyping)=>set({isTyping})
 }));
