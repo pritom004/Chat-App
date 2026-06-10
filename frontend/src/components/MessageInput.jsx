@@ -36,11 +36,7 @@ useEffect(() => {
     };
     reader.readAsDataURL(file);
   };
-  // const handleTextInput = (e) => {
-  //   setText(e.target.value)
 
-  //   typing()
-  // };
 
   const removeImage = () => {
     setImagePreview(null);

@@ -19,12 +19,11 @@ export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
-const userSocketMap = {}; // {userId: socketId}
-
+const userSocketMap = {}; 
 // on
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
-
+  console.log(userId)
 
   if (userId) userSocketMap[userId] = socket.id;
   // io.emit() is used to send even to all the connect client;
@@ -39,7 +38,7 @@ io.on("connection", (socket) => {
 
   socket.on("typing", (receiverId) => {
  
-  
+
     
     const receiverSocketId = getReceiverSocketId(receiverId);
     if(receiverSocketId){
